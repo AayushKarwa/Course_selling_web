@@ -2,10 +2,10 @@ const dotenv = require("dotenv")
 dotenv.config()
 const {Router} = require("express")
 const bcrypt = require("bcrypt")
-const {AdminModel} = require("../db")
+const {AdminModel, CourseModel} = require("../db")
 const {z} = require("zod")
 const jwt = require("jsonwebtoken")
-const {adminAuth} = require("../auth/adminAuth")
+const { middleware } = require("../auth/middleware")
 
 const adminRouter = Router();
 
@@ -19,6 +19,13 @@ const signupValidate = z.object({
 const signinValidate = z.object({
     email: z.string().email().min(5).max(25),
     password: z.string().min(5).max(16)
+})
+
+const courseValidate = z.object({
+    title: z.string().min(5).max(100),
+    description: z.string().min(5).max(100),
+    imgurl: z.string().min(5).max(100),
+    price: z.number()
 })
 
 adminRouter.post("/signup",async(req,res)=>{
@@ -82,9 +89,28 @@ adminRouter.post("/signup",async(req,res)=>{
 }
  })
 
- adminRouter.post("/show",adminAuth,async(req,res)=>{
+ adminRouter.post("/course",middleware(process.env.JWT_ADMIN_SECRET),async(req,res)=>{
+    const userid = req.userid;
+    const parsedDataWithSuccess = courseValidate.safeParse(req.body)
+    if(!parsedDataWithSuccess.success){
+        res.status(403).json({
+            message: parsedDataWithSuccess.error
+        });
+    console.log(parsedDataWithSuccess.data)
+    }
+    const {title,description,imgurl,price} = parsedDataWithSuccess.data;
+
+    const course = await CourseModel.create({
+        title:title,
+        description:description,
+        imgurl:imgurl,
+        price:price,
+        creatorid:userid
+    })
+
     res.json({
-        message:"wow you reached here."
+        message: `course created successfully by admin ${userid}`,
+        courseId: course._id
     })
 
  })

@@ -3,7 +3,7 @@ dotenv.config()
 const jwt = require("jsonwebtoken")    
 const {Router} = require("express");
 const { UserModel } = require("../db");
-const {userAuth }= require("../auth/userAuth");
+const {middleware} = require("../auth/middleware")
 const bcrypt = require("bcrypt")
 const {z} = require("zod")
 const userRouter = Router()
@@ -81,7 +81,7 @@ const signinValidate = z.object({
     }
     })
 
-    userRouter.post("/purchases",userAuth,(req,res)=>{
+    userRouter.post("/purchases",middleware(process.env.JWT_USER_SECRET),(req,res)=>{
         res.json({
             message: "you are signed up!"
         })

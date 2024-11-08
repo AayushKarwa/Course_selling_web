@@ -1,15 +1,15 @@
-const dotenv = require("dotenv")
-dotenv.config()
 const jwt = require("jsonwebtoken")
-function adminAuth(req,res,next){
-    const token = req.headers.token
+function middleware(password){
+    return function(req,res,next){
+
+        const token = req.headers.token
     if(!token){
         res.status(403).json({
             message: "token not provided"
         })
     }
     try{ 
-    const decodedToken = jwt.verify(token,process.env.JWT_ADMIN_SECRET)
+    const decodedToken = jwt.verify(password)
     if(decodedToken){
         req.userid = decodedToken.id;
     }
@@ -21,7 +21,7 @@ function adminAuth(req,res,next){
     })
 }
 }
-
-module.exports = ({
-    adminAuth
-})
+    }
+module.exports = {
+    middleware
+}
