@@ -28,6 +28,14 @@ const courseValidate = z.object({
     price: z.number()
 })
 
+const courseUpdateValidate = z.object({
+    title: z.string().min(5).max(100),
+    description: z.string().min(5).max(100),
+    imgurl: z.string().min(5).max(100),
+    price: z.number(),
+    courseid: z.string().min(5).max(100)
+})
+
 adminRouter.post("/signup",async(req,res)=>{
     const parsedDataWithSuccess = signupValidate.safeParse(req.body)
     console.log(JSON.stringify(parsedDataWithSuccess))
@@ -68,6 +76,11 @@ adminRouter.post("/signup",async(req,res)=>{
         email:email
         
     })
+    if(!user){
+        res.status(403).json({
+            message:"Incorrect credentials"
+        })
+    }
     console.log("user is: "+user)
     const passwordMatch = await bcrypt.compare(password,user.password)
     if(!passwordMatch){
@@ -114,6 +127,62 @@ adminRouter.post("/signup",async(req,res)=>{
     })
 
  })
+
+ adminRouter.put("/course",middleware(process.env.JWT_ADMIN_SECRET),async(req,res)=>{
+    const adminId = req.userid
+    console.log("inside the route...")
+    const parsedDataWithSuccess = courseUpdateValidate.safeParse(req.body);
+    if(!parsedDataWithSuccess.success){
+        res.status(403).json({
+            message: parsedDataWithSuccess.error.errors
+        })}
+        console.log(parsedDataWithSuccess.data)
+        const {title,description,imgurl,price,courseid} = parsedDataWithSuccess.data;
+        const course = await CourseModel.findOne({
+            _id:courseid,
+            creatorid:adminId
+        })
+        if(course){
+            const updatedCourse = await CourseModel.updateOne({
+                _id:courseid
+                
+            },{
+            title:title,
+            description:description,
+            imgurl:imgurl,
+            price:price
+           
+            })
+            res.json({
+                message: `course updated successfully`,
+                courseid: updatedCourse._id
+            })
+        }else{
+            res.status(403).json({
+                message:"this course doesn't belongs to you"
+            })
+        }
+        
+    })
+
+    adminRouter.get("/courses/bulk",middleware(process.env.JWT_ADMIN_SECRET),async(req,res)=>{
+        const adminId = req.userid;
+
+        const courses = await CourseModel.findOne({
+            creatorid:adminId
+
+        })
+
+        res.json({
+            message:`Hello admin ${courses.creatorid}`,
+            courses: {
+                title: courses.title,
+                description: courses.description,
+                price: courses.price
+            }
+        })
+
+    })
 
 
 module.exports = {

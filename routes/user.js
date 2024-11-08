@@ -60,6 +60,11 @@ const signinValidate = z.object({
             email:email
             
         })
+        if(!user){
+            res.status(403).json({
+                message:"Incorrect credentials"
+            })
+        }
         console.log("user is: "+user)
         const passwordMatch = await bcrypt.compare(password,user.password)
         if(!passwordMatch){
