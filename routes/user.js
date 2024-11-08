@@ -3,7 +3,7 @@ dotenv.config()
 const jwt = require("jsonwebtoken")    
 const {Router} = require("express");
 const { UserModel } = require("../db");
-const {auth }= require("../auth/auth");
+const {userAuth }= require("../auth/userAuth");
 const bcrypt = require("bcrypt")
 const {z} = require("zod")
 const userRouter = Router()
@@ -22,7 +22,7 @@ const signinValidate = z.object({
 
     userRouter.post("/signup",async(req,res)=>{
 
-       const parsedDataWithSuccess = signinValidate.safeParse(req.body)
+       const parsedDataWithSuccess = signupValidate.safeParse(req.body)
        console.log(JSON.stringify(parsedDataWithSuccess))
        if(!parsedDataWithSuccess.success){
         res.status(403).json({
@@ -34,11 +34,12 @@ const signinValidate = z.object({
         const hashedPassword = await bcrypt.hash(password,10)
 
         await UserModel.create({
-            email:email,
-            password:hashedPassword,
-            firstname:firstname,
-            lastname:lastname
-        })
+            email: email,
+            firstname: firstname,
+            lastname: lastname,
+            password: hashedPassword
+            
+        });
         res.json({
             message: "you are signed up!"
         })
@@ -71,16 +72,16 @@ const signinValidate = z.object({
 
         const token = jwt.sign({
             id: user._id
-        },process.env.JWT_SECRET)
+        },process.env.JWT_USER_SECRET)
         console.log("token is: "+token)
         res.json({
-            message: "you are signed in successfully!",
+            message: `${user.firstname} you are signed in successfully!`,
             token: token
         })
     }
     })
 
-    userRouter.post("/purchases",auth,(req,res)=>{
+    userRouter.post("/purchases",userAuth,(req,res)=>{
         res.json({
             message: "you are signed up!"
         })
